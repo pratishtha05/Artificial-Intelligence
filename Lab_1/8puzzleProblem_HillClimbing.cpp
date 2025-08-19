@@ -1,116 +1,136 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #include <algorithm>
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
-const vector<int> target = {1, 2, 3, 4, 5, 6, 7, 8, 0};
+// Goal state
+vector<vector<int>> goal = {
+    {1, 2, 3},
+    {4, 5, 6},
+    {7, 8, 0}
+};
 
-void printBoard(const vector<int>& board) {
-    for (int i = 0; i < 9; i++) {
-        cout << board[i] << " ";
-        if ((i + 1) % 3 == 0) cout << endl;
-    }
-    cout << endl;
+// Directions for blank movement (up, down, left, right)
+int dx[] = {-1, 1, 0, 0};
+int dy[] = {0, 0, -1, 1};
+
+// Convert 2D vector to string (for easy printing/debugging)
+string toString(vector<vector<int>> v) {
+    string s = "";
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            s += to_string(v[i][j]);
+    return s;
 }
 
-int misplaced(const vector<int>& board) {
-    int count = 0;
-    for (int i = 0; i < 9; i++) {
-        if (board[i] != 0 && board[i] != target[i])
-            count++;
+// Print puzzle state
+void printPuzzle(vector<vector<int>> v) {
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++)
+            cout << v[i][j] << " ";
+        cout << "\n";
     }
-    return count;
+    cout << "------\n";
 }
 
-vector<vector<int>> getNeighbors(const vector<int>& board) {
-    vector<vector<int>> neighbors;
-    int idx = 0;
-    while (board[idx] != 0) idx++; 
-    int x = idx / 3, y = idx % 3;
+// Find blank (0) position
+pair<int, int> findZero(vector<vector<int>> &v) {
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            if (v[i][j] == 0)
+                return make_pair(i, j);
+    return make_pair(-1, -1);
+}
 
-    int dx[] = {-1, 1, 0, 0};
-    int dy[] = {0, 0, -1, 1};
+// Heuristic: number of misplaced tiles
+int heuristic(vector<vector<int>> &v) {
+    int h = 0;
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            if (v[i][j] != 0 && v[i][j] != goal[i][j])
+                h++;
+    return h;
+}
+
+// Generate all possible neighbor states
+vector<vector<vector<int>>> getNeighbors(vector<vector<int>> &curr) {
+    vector<vector<vector<int>>> neighbors;
+    pair<int, int> pos = findZero(curr);
+    int x = pos.first, y = pos.second;
 
     for (int i = 0; i < 4; i++) {
-        int nx = x + dx[i], ny = y + dy[i];
-        if (nx < 0 || ny < 0 || nx >= 3 || ny >= 3) continue;
-
-        int nidx = nx * 3 + ny;
-        vector<int> next = board;
-        neighbors.push_back(next);
+        int nx = x + dx[i];
+        int ny = y + dy[i];
+        if (nx >= 0 && nx < 3 && ny >= 0 && ny < 3) {
+            vector<vector<int>> next = curr;
+            swap(next[x][y], next[nx][ny]);
+            neighbors.push_back(next);
+        }
     }
-
     return neighbors;
 }
 
-void hillClimbing(vector<int> start) {
-    vector<int> current = start;
+// Hill Climbing Algorithm
+void solvePuzzleHillClimbing(vector<vector<int>> start) {
+    srand(time(0)); // for random tie-breaking
+
+    vector<vector<int>> current = start;
+    int current_h = heuristic(current);
+
+    cout << "Initial State (Heuristic = " << current_h << "):\n";
+    printPuzzle(current);
+
     int steps = 0;
 
-    cout << "Starting Hill Climbing...\n";
     while (true) {
-        int currentH = misplaced(current);
-
-        if (currentH == 0) {
-            cout << "\n Puzzle solved in " << steps << " steps!\n";
-            cout << "Final State:\n";
-            printBoard(current);
+        if (current == goal) {
+            cout << "Goal reached successfully!\n";
+            cout << "Total Steps: " << steps << "\n";
             return;
         }
 
-        vector<vector<int>> neighbors = getNeighbors(current);
-        vector<int> bestNext;
-        int bestH = currentH;
+        vector<vector<vector<int>>> neighbors = getNeighbors(current);
 
-        for (auto& next : neighbors) {
-            int h = misplaced(next);
-            if (h < bestH) {
-                bestH = h;
-                bestNext = next;
+        vector<vector<int>> nextState = current;
+        int best_h = current_h;
+
+        // Find neighbor with best heuristic (lowest)
+        for (auto &n : neighbors) {
+            int h = heuristic(n);
+            if (h < best_h) {
+                best_h = h;
+                nextState = n;
             }
         }
 
-        if (bestH == currentH) {
-            cout << "\n Stuck in local minimum!\n";
-            cout << "Current heuristic (misplaced tiles): " << currentH << "\n";
-            cout << "Cannot improve further.\n";
-            cout << "Final (unsolved) state:\n";
-            printBoard(current);
+        // If no better neighbor found → stuck in local minima
+        if (best_h >= current_h) {
+            cout << "Stuck in local minimum or plateau.\n";
+            cout << "Final State (Heuristic = " << current_h << "):\n";
+            printPuzzle(current);
             return;
         }
 
-        current = bestNext;
+        // Move to better neighbor
+        current = nextState;
+        current_h = best_h;
         steps++;
-        cout << "Step " << steps << " | Misplaced: " << bestH << endl;
-    }
-}
 
-bool isSolvable(vector<int> board) {
-    vector<int> temp;
-    int inv = 0;
-    for (int x : board) if (x != 0) temp.push_back(x);
-    for (int i = 0; i < 8; i++)
-        for (int j = i + 1; j < 8; j++)
-            if (temp[i] > temp[j]) inv++;
-    return inv % 2 == 0;
+        cout << "Step " << steps << " (Heuristic = " << current_h << "):\n";
+        printPuzzle(current);
+    }
 }
 
 int main() {
-    vector<int> start(9);
-    cout << "Enter 8-puzzle initial state (use 0 for blank), row by row:\n";
-    for (int i = 0; i < 9; i++) {
-        cin >> start[i];
-    }
+    vector<vector<int>> start(3, vector<int>(3));
+    cout << "Enter the initial 8-puzzle state (use 0 for blank):\n";
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            cin >> start[i][j];
 
-    cout << "\nInitial State:\n";
-    printBoard(start);
-
-    if (!isSolvable(start)) {
-        cout << "This puzzle is not solvable!\n";
-        return 0;
-    }
-
-    hillClimbing(start);
-
+    solvePuzzleHillClimbing(start);
     return 0;
 }
