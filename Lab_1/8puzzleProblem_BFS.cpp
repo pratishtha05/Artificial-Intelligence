@@ -7,18 +7,15 @@
 using namespace std;
 using namespace std;
 
-// Goal state for reference
 vector<vector<int>> goal = {
     {1, 2, 3},
     {4, 5, 6},
     {7, 8, 0}
 };
 
-// Directions for moving the blank space (up, down, left, right)
 int dx[] = {-1, 1, 0, 0};
 int dy[] = {0, 0, -1, 1};
 
-// Convert 2D vector to string (for hashing and visited tracking)
 string toString(vector<vector<int>> v) {
     string s = "";
     for (auto &row : v)
@@ -27,7 +24,6 @@ string toString(vector<vector<int>> v) {
     return s;
 }
 
-// Print puzzle
 void printPuzzle(vector<vector<int>> v) {
     for (auto &row : v) {
         for (auto &x : row)
@@ -37,7 +33,6 @@ void printPuzzle(vector<vector<int>> v) {
     cout << "------\n";
 }
 
-// Find position of 0 (blank)
 pair<int, int> findZero(vector<vector<int>> &v) {
     for (int i = 0; i < 3; i++)
         for (int j = 0; j < 3; j++)
@@ -46,11 +41,9 @@ pair<int, int> findZero(vector<vector<int>> &v) {
     return {-1, -1};
 }
 
-// BFS to solve puzzle
-// BFS to solve the puzzle
 void solvePuzzle(vector<vector<int>> start) {
     queue<vector<vector<int>>> q;
-    unordered_map<string, string> parent; // To reconstruct path
+    unordered_map<string, string> parent;
     unordered_map<string, bool> visited;
 
     q.push(start);
@@ -66,7 +59,6 @@ void solvePuzzle(vector<vector<int>> start) {
             vector<string> path;
             string key = toString(curr);
 
-            // Reconstruct path
             while (key != "") {
                 vector<vector<int>> temp(3, vector<int>(3));
                 for (int i = 0, k = 0; i < 3; i++)
@@ -114,7 +106,6 @@ void solvePuzzle(vector<vector<int>> start) {
     cout << "No solution found.\n";
 }
 
-// Main function
 int main() {
     vector<vector<int>> start(3, vector<int>(3));
 

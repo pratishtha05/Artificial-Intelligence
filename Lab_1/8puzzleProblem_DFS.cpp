@@ -6,18 +6,15 @@
 #include <algorithm>
 using namespace std;
 
-// Goal state for reference
 vector<vector<int>> goal = {
     {1, 2, 3},
     {4, 5, 6},
     {7, 8, 0}
 };
 
-// Directions for moving the blank space (up, down, left, right)
 int dx[] = {-1, 1, 0, 0};
 int dy[] = {0, 0, -1, 1};
 
-// Convert 2D vector to string (for hashing and visited tracking)
 string toString(vector<vector<int>> v) {
     string s = "";
     for (int i = 0; i < 3; i++)
@@ -26,7 +23,6 @@ string toString(vector<vector<int>> v) {
     return s;
 }
 
-// Print the puzzle state
 void printPuzzle(vector<vector<int>> v) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++)
@@ -36,7 +32,6 @@ void printPuzzle(vector<vector<int>> v) {
     cout << "------\n";
 }
 
-// Find position of 0 (blank)
 pair<int, int> findZero(vector<vector<int>> &v) {
     for (int i = 0; i < 3; i++)
         for (int j = 0; j < 3; j++)
@@ -45,17 +40,16 @@ pair<int, int> findZero(vector<vector<int>> &v) {
     return make_pair(-1, -1);
 }
 
-// DFS search (iterative version)
 void solvePuzzleDFS(vector<vector<int>> start) {
     stack<vector<vector<int>>> st;
-    unordered_map<string, string> parent; // to reconstruct path
+    unordered_map<string, string> parent; 
     unordered_map<string, bool> visited;
 
     st.push(start);
     visited[toString(start)] = true;
     parent[toString(start)] = "";
 
-    int maxDepth = 50; // limit depth to prevent infinite recursion
+    int maxDepth = 50; 
     unordered_map<string, int> depth;
     depth[toString(start)] = 0;
 
@@ -96,7 +90,6 @@ void solvePuzzleDFS(vector<vector<int>> start) {
         int x = pos.first;
         int y = pos.second;
 
-        // Explore 4 directions
         for (int i = 0; i < 4; i++) {
             int nx = x + dx[i];
             int ny = y + dy[i];
