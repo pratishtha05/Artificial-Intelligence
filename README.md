@@ -12,8 +12,8 @@
   Example:  
 1 2 3  
 4 0 6  
-7 5 8  
-
+7 5 8    
+ 
 - **Step 2:**  
 Define the goal state as:  
 1 2 3  
